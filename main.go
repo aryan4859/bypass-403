@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"flag"
 	"fmt"
 	"log"
@@ -90,6 +91,13 @@ func constructEndpointPayloads(domain, path string) []string {
 	}
 }
 
+// create a custom Http client with insecure transport
+var insecureHTTPClient = &http.Client{
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	},
+}
+
 func penetrateEndpoint(wg *sync.WaitGroup, url string, header ...string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
@@ -106,7 +114,8 @@ func penetrateEndpoint(wg *sync.WaitGroup, url string, header ...string) {
 		req.Header.Set(h, headerValue)
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	//resp, err := http.DefaultClient.Do(req)
+	resp, err := insecureHTTPClient.Do(req) // use the custom client to send the request
 	if err != nil {
 		log.Fatal(Red(err))
 	}
